@@ -1,0 +1,19 @@
+[tool.poetry]
+name = "person-service"
+version = "0.1.0"
+description = "Person service following DDD + Clean Architecture with FastAPI"
+authors = ["you <you@example.com>"]
+packages = [{ include = "app" }]
+
+[tool.poetry.dependencies]
+python = "^3.10"
+fastapi = "^0.95.0"
+uvicorn = {extras = ["standard"], version = "^0.22.0"}
+pydantic = "^1.10.9"
+sqlalchemy = "^1.4.50"
+databases = "^0.5.6"
+pytest = "^7.3.1"
+httpx = "^0.24.1"
+
+[tool.poetry.dev-dependencies]
+pytest = "^7.3.1"
