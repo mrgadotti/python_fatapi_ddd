@@ -3,6 +3,7 @@ from typing import List, Optional
 from uuid import UUID
 from app.domain.person import Person
 
+
 class PersonRepository(ABC):
     @abstractmethod
     async def add(self, person: Person) -> Person:

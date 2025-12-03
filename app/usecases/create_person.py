@@ -2,6 +2,7 @@ from app.domain.person import Person
 from app.domain.repository.person_repository import PersonRepository
 from typing import Optional
 
+
 class CreatePerson:
     def __init__(self, repository: PersonRepository):
         self.repository = repository

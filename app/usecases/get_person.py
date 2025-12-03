@@ -3,6 +3,7 @@ from typing import Optional
 from app.domain.person import Person
 from app.domain.repository.person_repository import PersonRepository
 
+
 class GetPerson:
     def __init__(self, repository: PersonRepository):
         self.repository = repository

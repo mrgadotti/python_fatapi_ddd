@@ -7,6 +7,7 @@ from app.domain.user import User
 from app.domain.repository.user_repository import UserRepository
 from app.adapters.db.models import UserModel, RevokedTokenModel
 
+
 class SqlAlchemyUserRepository(UserRepository):
     def __init__(self, sessionmaker: async_sessionmaker[AsyncSession]):
         self._sessionmaker = sessionmaker
@@ -22,7 +23,12 @@ class SqlAlchemyUserRepository(UserRepository):
             session.add(orm)
             await session.commit()
             await session.refresh(orm)
-            return User(id=UUID(orm.id), email=orm.email, hashed_password=orm.hashed_password, is_active=orm.is_active)
+            return User(
+                id=UUID(orm.id),
+                email=orm.email,
+                hashed_password=orm.hashed_password,
+                is_active=orm.is_active,
+            )
 
     async def get_by_email(self, email: str) -> Optional[User]:
         async with self._sessionmaker() as session:
@@ -31,14 +37,24 @@ class SqlAlchemyUserRepository(UserRepository):
             orm = res.scalar_one_or_none()
             if not orm:
                 return None
-            return User(id=UUID(orm.id), email=orm.email, hashed_password=orm.hashed_password, is_active=orm.is_active)
+            return User(
+                id=UUID(orm.id),
+                email=orm.email,
+                hashed_password=orm.hashed_password,
+                is_active=orm.is_active,
+            )
 
     async def get_by_id(self, user_id: UUID) -> Optional[User]:
         async with self._sessionmaker() as session:
             orm = await session.get(UserModel, str(user_id))
             if not orm:
                 return None
-            return User(id=UUID(orm.id), email=orm.email, hashed_password=orm.hashed_password, is_active=orm.is_active)
+            return User(
+                id=UUID(orm.id),
+                email=orm.email,
+                hashed_password=orm.hashed_password,
+                is_active=orm.is_active,
+            )
 
     async def add_revoked_token(self, jti: str, expires_at: datetime) -> None:
         async with self._sessionmaker() as session:

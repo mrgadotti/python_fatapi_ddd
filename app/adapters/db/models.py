@@ -4,6 +4,7 @@ from datetime import datetime
 
 Base = declarative_base()
 
+
 class PersonModel(Base):
     __tablename__ = "persons"
 
@@ -12,6 +13,7 @@ class PersonModel(Base):
     email = Column(String, nullable=False, index=True)
     age = Column(Integer, nullable=True)
 
+
 class UserModel(Base):
     __tablename__ = "users"
 
@@ -19,6 +21,7 @@ class UserModel(Base):
     email = Column(String, nullable=False, unique=True, index=True)
     hashed_password = Column(String, nullable=False)
     is_active = Column(Boolean, default=True)
+
 
 class RevokedTokenModel(Base):
     __tablename__ = "revoked_tokens"

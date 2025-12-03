@@ -4,6 +4,7 @@ from uuid import UUID
 from app.domain.user import User
 from datetime import datetime
 
+
 class UserRepository(ABC):
     @abstractmethod
     async def create(self, user: User) -> User:

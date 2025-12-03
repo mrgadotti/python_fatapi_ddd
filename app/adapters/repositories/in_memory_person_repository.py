@@ -4,6 +4,7 @@ from app.domain.person import Person
 from app.domain.repository.person_repository import PersonRepository
 import asyncio
 
+
 class InMemoryPersonRepository(PersonRepository):
     def __init__(self):
         self._store: Dict[UUID, Person] = {}

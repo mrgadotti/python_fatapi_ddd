@@ -2,7 +2,9 @@ from fastapi.testclient import TestClient
 from uuid import UUID
 
 
-def _register_and_login(client: TestClient, email="test@gmail.com", password="password"):
+def _register_and_login(
+    client: TestClient, email="test@gmail.com", password="password"
+):
     # register user (ignore 400 if already exists)
     client.post("/auth/register", json={"email": email, "password": password})
     # login and return token
@@ -15,7 +17,9 @@ def _register_and_login(client: TestClient, email="test@gmail.com", password="pa
 def test_create_and_get_person(client):
     token = _register_and_login(client)
     payload = {"name": "Alice", "email": "alice@example.com", "age": 30}
-    res = client.post("/persons/", json=payload, headers={"Authorization": f"Bearer {token}"})
+    res = client.post(
+        "/persons/", json=payload, headers={"Authorization": f"Bearer {token}"}
+    )
     assert res.status_code == 201
     created = res.json()
     assert created["name"] == "Alice"
@@ -31,9 +35,17 @@ def test_create_and_get_person(client):
 def test_list_and_delete_person(client):
     token = _register_and_login(client)
     # create two persons
-    r1 = client.post("/persons/", json={"name": "A", "email": "a@example.com"}, headers={"Authorization": f"Bearer {token}"})
+    r1 = client.post(
+        "/persons/",
+        json={"name": "A", "email": "a@example.com"},
+        headers={"Authorization": f"Bearer {token}"},
+    )
     assert r1.status_code == 201
-    r2 = client.post("/persons/", json={"name": "B", "email": "b@example.com"}, headers={"Authorization": f"Bearer {token}"})
+    r2 = client.post(
+        "/persons/",
+        json={"name": "B", "email": "b@example.com"},
+        headers={"Authorization": f"Bearer {token}"},
+    )
     assert r2.status_code == 201
 
     # list

@@ -10,7 +10,9 @@ from app.domain.user import User
 from app.services.auth import get_password_hash
 
 # import Person dataclass / domain entity used by repositories in tests
-from app.domain.person import Person  # adjust import if your project uses a different path/name
+from app.domain.person import (
+    Person,
+)  # adjust import if your project uses a different path/name
 
 
 # Simple in-memory UserRepository implementation for tests

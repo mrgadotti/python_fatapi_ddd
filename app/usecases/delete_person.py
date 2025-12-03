@@ -1,6 +1,7 @@
 from uuid import UUID
 from app.domain.repository.person_repository import PersonRepository
 
+
 class DeletePerson:
     def __init__(self, repository: PersonRepository):
         self.repository = repository

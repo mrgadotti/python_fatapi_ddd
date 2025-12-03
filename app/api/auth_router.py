@@ -1,7 +1,11 @@
 from fastapi import APIRouter, Request, HTTPException, status, Depends
 from datetime import timedelta, datetime
 from fastapi.security import OAuth2PasswordBearer
-from app.adapters.schemas.auth_schema import TokenResponse, LoginRequest, RegisterRequest
+from app.adapters.schemas.auth_schema import (
+    TokenResponse,
+    LoginRequest,
+    RegisterRequest,
+)
 from app.services.auth import authenticate_user, create_access_token, get_password_hash
 from app.domain.user import User
 from uuid import uuid4
@@ -20,10 +24,15 @@ async def login(request: Request, body: LoginRequest):
     user_repo = request.app.state.user_repository
     user = await authenticate_user(user_repo, body.email, body.password)
     if not user:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Incorrect email or password")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Incorrect email or password",
+        )
     # create token
     expires = timedelta(minutes=60 * 24)
-    token, expire_dt, jti = create_access_token({"sub": user.email}, request.app.state.SECRET_KEY, expires_delta=expires)
+    token, expire_dt, jti = create_access_token(
+        {"sub": user.email}, request.app.state.SECRET_KEY, expires_delta=expires
+    )
     return TokenResponse(access_token=token, expires_at=expire_dt)
 
 
@@ -60,14 +69,19 @@ async def logout(request: Request, token: str = Depends(oauth2_scheme)):
     """
     secret_key = request.app.state.SECRET_KEY
     from jose import jwt, JWTError
+
     try:
         payload = jwt.decode(token, secret_key, algorithms=["HS256"])
         jti: str = payload.get("jti")
         exp = payload.get("exp")
         if jti is None or exp is None:
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid token")
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid token"
+            )
     except JWTError:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid token")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid token"
+        )
 
     expires_at = datetime.utcfromtimestamp(exp)
     user_repo = request.app.state.user_repository

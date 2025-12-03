@@ -14,6 +14,7 @@ pwd_context = CryptContext(schemes=["argon2"], deprecated="auto")
 ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24  # 24h
 ALGORITHM = "HS256"
 
+
 def get_password_hash(password: str) -> str:
     if isinstance(password, bytes):
         password = password.decode("utf-8", errors="ignore")
@@ -22,6 +23,7 @@ def get_password_hash(password: str) -> str:
     except Exception as exc:
         # raise a plain ValueError so callers can map to HTTP 400
         raise ValueError(f"Error hashing password: {exc}") from exc
+
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     if isinstance(plain_password, bytes):
@@ -32,7 +34,10 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
         # treat verification errors as non-matching
         return False
 
-def create_access_token(data: dict, secret_key: str, expires_delta: Optional[timedelta] = None) -> (str, datetime, str):
+
+def create_access_token(
+    data: dict, secret_key: str, expires_delta: Optional[timedelta] = None
+) -> (str, datetime, str):  # type: ignore
     to_encode = data.copy()
     jti = str(uuid4())
     now = datetime.utcnow()
@@ -44,7 +49,10 @@ def create_access_token(data: dict, secret_key: str, expires_delta: Optional[tim
     encoded_jwt = jwt.encode(to_encode, secret_key, algorithm=ALGORITHM)
     return encoded_jwt, expire, jti
 
-async def authenticate_user(repo: UserRepository, email: str, password: str) -> Optional[User]:
+
+async def authenticate_user(
+    repo: UserRepository, email: str, password: str
+) -> Optional[User]:
     user = await repo.get_by_email(email)
     if not user:
         return None
@@ -54,21 +62,32 @@ async def authenticate_user(repo: UserRepository, email: str, password: str) -> 
         return None
     return user
 
+
 async def get_current_user(request: Request, token: str, secret_key: str) -> User:
     try:
         payload = jwt.decode(token, secret_key, algorithms=[ALGORITHM])
         email: str = payload.get("sub")
         jti: str = payload.get("jti")
         if email is None or jti is None:
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Could not validate credentials")
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Could not validate credentials",
+            )
     except JWTError:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Could not validate credentials")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Could not validate credentials",
+        )
 
     repo: UserRepository = request.app.state.user_repository
     revoked = await repo.is_token_revoked(jti)
     if revoked:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Token has been revoked")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Token has been revoked"
+        )
     user = await repo.get_by_email(email)
     if not user:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found"
+        )
     return user
