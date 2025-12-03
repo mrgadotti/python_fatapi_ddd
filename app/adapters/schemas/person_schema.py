@@ -1,6 +1,7 @@
 from pydantic import BaseModel, EmailStr
 from typing import Optional
 from uuid import UUID
+from pydantic import ConfigDict
 
 class PersonCreate(BaseModel):
     name: str
@@ -18,5 +19,5 @@ class PersonOut(BaseModel):
     email: EmailStr
     age: Optional[int] = None
 
-    class Config:
-        orm_mode = True
+    # Pydantic v2: to load from ORM/attribute-style objects
+    model_config = ConfigDict(from_attributes=True)

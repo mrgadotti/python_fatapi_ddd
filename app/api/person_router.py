@@ -9,20 +9,21 @@ from app.usecases.list_persons import ListPersons
 from app.usecases.update_person import UpdatePerson
 from app.usecases.delete_person import DeletePerson
 from app.domain.repository.person_repository import PersonRepository
+from app.services.auth import get_current_user
+from fastapi.security import OAuth2PasswordBearer
 
 router = APIRouter()
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
 
 def repo_dep(request: Request) -> PersonRepository:
-    """
-    Dependency that retrieves the repository from the FastAPI app state.
-
-    This avoids importing app.main (and therefore avoids the circular import)
-    because we access the repository via the incoming request object.
-    """
     return request.app.state.person_repository
 
-@router.post("/", response_model=PersonOut, status_code=status.HTTP_201_CREATED)
-async def create_person(cmd: PersonCreate, repo: PersonRepository = Depends(repo_dep)):
+async def current_user_dep(request: Request, token: str = Depends(oauth2_scheme)):
+    secret = request.app.state.SECRET_KEY
+    return await get_current_user(request, token, secret)
+
+@router.post("/", response_model=PersonOut, status_code=status.HTTP_201_CREATED, dependencies=[Depends(current_user_dep)])
+async def create_person(cmd: PersonCreate, request: Request, repo: PersonRepository = Depends(repo_dep)):
     uc = CreatePerson(repo)
     person = await uc.execute(name=cmd.name, email=cmd.email, age=cmd.age)
     return PersonOut(**person.__dict__)
