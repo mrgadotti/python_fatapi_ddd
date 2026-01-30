@@ -9,39 +9,34 @@ from app.usecases.list_persons import ListPersons
 from app.usecases.update_person import UpdatePerson
 from app.usecases.delete_person import DeletePerson
 from app.domain.repository.person_repository import PersonRepository
-from app.services.auth import get_current_user
-from fastapi.security import OAuth2PasswordBearer
+from app.api.deps import current_user_dep
 
 router = APIRouter()
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
 
 
 def repo_dep(request: Request) -> PersonRepository:
     return request.app.state.person_repository
 
 
-async def current_user_dep(request: Request, token: str = Depends(oauth2_scheme)):
-    secret = request.app.state.SECRET_KEY
-    return await get_current_user(request, token, secret)
-
-
 @router.post(
-    "/",
+    "",
     response_model=PersonOut,
     status_code=status.HTTP_201_CREATED,
     dependencies=[Depends(current_user_dep)],
+    summary="Create person",
+    description="Creates a new person by providing name, email, and age.",
 )
-async def create_person(
-    cmd: PersonCreate, request: Request, repo: PersonRepository = Depends(repo_dep)
-):
+async def create_person(cmd: PersonCreate, repo: PersonRepository = Depends(repo_dep)):
+    print("Creating person...")
     uc = CreatePerson(repo)
     person = await uc.execute(name=cmd.name, email=cmd.email, age=cmd.age)
     return PersonOut(**person.__dict__)
 
 
-@router.get("/", response_model=List[PersonOut])
+@router.get("", response_model=List[PersonOut])
 async def list_persons(repo: PersonRepository = Depends(repo_dep)):
     uc = ListPersons(repo)
+    print("Listing persons...")
     persons = await uc.execute()
     return [PersonOut(**p.__dict__) for p in persons]
 
@@ -66,7 +61,11 @@ async def update_person(
     return PersonOut(**updated.__dict__)
 
 
-@router.delete("/{person_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete(
+    "/{person_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    dependencies=[Depends(current_user_dep)],
+)
 async def delete_person(person_id: UUID, repo: PersonRepository = Depends(repo_dep)):
     uc = DeletePerson(repo)
     await uc.execute(person_id)

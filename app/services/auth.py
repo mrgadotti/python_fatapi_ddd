@@ -1,5 +1,5 @@
-from datetime import datetime, timedelta
-from typing import Optional
+from datetime import datetime, timedelta, timezone
+from typing import Any, Dict, Optional, Tuple
 from uuid import uuid4
 from jose import jwt, JWTError
 from passlib.context import CryptContext
@@ -11,7 +11,8 @@ from app.domain.repository.user_repository import UserRepository
 pwd_context = CryptContext(schemes=["argon2"], deprecated="auto")
 
 # constants - in production set via env
-ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24  # 24h
+# ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24  # 24h
+ACCESS_TOKEN_EXPIRE_MINUTES = 1 # 1 minutes for testing
 ALGORITHM = "HS256"
 
 
@@ -36,11 +37,13 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
 
 
 def create_access_token(
-    data: dict, secret_key: str, expires_delta: Optional[timedelta] = None
-) -> (str, datetime, str):  # type: ignore
-    to_encode = data.copy()
+    data: Dict[str, Any],
+    secret_key: str,
+    expires_delta: Optional[timedelta] = None,
+) -> Tuple[str, datetime, str]:
+    to_encode: Dict[str, Any] = data.copy()
     jti = str(uuid4())
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc)
     if expires_delta:
         expire = now + expires_delta
     else:
@@ -66,9 +69,9 @@ async def authenticate_user(
 async def get_current_user(request: Request, token: str, secret_key: str) -> User:
     try:
         payload = jwt.decode(token, secret_key, algorithms=[ALGORITHM])
-        email: str = payload.get("sub")
-        jti: str = payload.get("jti")
-        if email is None or jti is None:
+        email: str = payload.get("sub") # type: ignore
+        jti: str = payload.get("jti") # type: ignore
+        if email is None or jti is None: # type: ignore
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Could not validate credentials",

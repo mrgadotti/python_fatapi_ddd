@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Request, HTTPException, status, Depends
-from datetime import timedelta, datetime
+from datetime import timedelta, datetime, timezone
 from fastapi.security import OAuth2PasswordBearer
 from app.adapters.schemas.auth_schema import (
     TokenResponse,
@@ -29,20 +29,20 @@ async def login(request: Request, body: LoginRequest):
             detail="Incorrect email or password",
         )
     # create token
-    expires = timedelta(minutes=60 * 24)
-    token, expire_dt, jti = create_access_token(
+    expires = timedelta(minutes=request.app.state.ACCESS_TOKEN_EXPIRE_MINUTES)
+    token, expire_dt, _ = create_access_token(
         {"sub": user.email}, request.app.state.SECRET_KEY, expires_delta=expires
     )
     return TokenResponse(access_token=token, expires_at=expire_dt)
 
 
 @router.post("/register", status_code=201)
-async def register(request: Request, body: RegisterRequest):
+async def register(request: Request, body: RegisterRequest) -> dict[str, str]:
     """
     Register a new user (email + password).
     """
     # Basic limits
-    if body.password is None or len(body.password) == 0:
+    if len(body.password) == 0:
         raise HTTPException(status_code=400, detail="Password cannot be empty")
     if len(body.password) > 1024:
         raise HTTPException(status_code=400, detail="Password too long")
@@ -72,7 +72,7 @@ async def logout(request: Request, token: str = Depends(oauth2_scheme)):
 
     try:
         payload = jwt.decode(token, secret_key, algorithms=["HS256"])
-        jti: str = payload.get("jti")
+        jti = payload.get("jti")
         exp = payload.get("exp")
         if jti is None or exp is None:
             raise HTTPException(
@@ -83,7 +83,7 @@ async def logout(request: Request, token: str = Depends(oauth2_scheme)):
             status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid token"
         )
 
-    expires_at = datetime.utcfromtimestamp(exp)
+    expires_at = datetime.fromtimestamp(exp, timezone.utc)
     user_repo = request.app.state.user_repository
     await user_repo.add_revoked_token(jti, expires_at)
     return None
