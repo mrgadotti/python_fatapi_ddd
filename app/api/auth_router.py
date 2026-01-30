@@ -2,7 +2,7 @@ import logging
 
 from fastapi import APIRouter, Request, HTTPException, status, Depends
 from datetime import timedelta, datetime, timezone
-from fastapi.security import OAuth2PasswordBearer
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from app.adapters.schemas.auth_schema import (
     TokenResponse,
     LoginRequest,
@@ -14,8 +14,7 @@ from uuid import uuid4
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
-# tokenUrl can remain pointing to /auth/login (used by docs); the endpoint now accepts JSON
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
+bearer_scheme = HTTPBearer()
 
 
 @router.post(
@@ -90,12 +89,16 @@ async def register(request: Request, body: RegisterRequest) -> dict[str, str]:
     summary="Logout",
     description="Revokes the current access token.",
 )
-async def logout(request: Request, token: str = Depends(oauth2_scheme)):
+async def logout(
+    request: Request, creds: HTTPAuthorizationCredentials = Depends(bearer_scheme)
+):
     """
     Logout by revoking the current token. Token jti is stored in DB with its expiry.
     """
     secret_key = request.app.state.SECRET_KEY
     from jose import jwt, JWTError
+
+    token = creds.credentials
 
     try:
         payload = jwt.decode(token, secret_key, algorithms=["HS256"])
