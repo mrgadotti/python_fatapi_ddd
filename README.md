@@ -9,20 +9,60 @@ Project layout:
 - app/api: FastAPI routers / controllers
 - app/main.py: App factory and DI
 
-Run locally (uses in-memory repo by default):
+## How to run
+
 1. Install dependencies:
    pip install -r requirements.txt
-2. Start:
+2. (Optional) Create a .env file at the project root:
+   - DATABASE_URL=sqlite+aiosqlite:///./persons.db
+   - SECRET_KEY=change-me-please-use-env
+   - ACCESS_TOKEN_EXPIRE_MINUTES=1
+3. Start the API:
    uvicorn app.main:app --reload
 
-Run tests:
-   pytest
+## Run tests
 
-Next steps:
-- Add SQLAlchemy persistence and migrations (Alembic).
-- Add authentication, validation rules, and more robust error handling/logging.
+pytest
 
-Login routes:
+## Migrations
+
+Alembic is not configured yet. Tables are created automatically on startup via SQLAlchemy (`Base.metadata.create_all`).
+
+If you want to reset the local SQLite DB, delete persons.db and restart the API.
+
+If you want to use migrations (Alembic), add the configuration and then run:
+
+alembic upgrade head
+
+## Routes
+
+### Auth
+
+- POST /auth/register
+- POST /auth/login
+- POST /auth/logout (Bearer token)
+
+### Persons (Bearer token)
+
+- POST /persons
+- GET /persons
+- GET /persons/{person_id}
+- PUT /persons/{person_id}
+- DELETE /persons/{person_id}
+
+### Git (Bearer token)
+
+- GET /git
+
+## Examples
+
+## Swagger (API docs)
+
+After starting the server, open:
+
+- http://127.0.0.1:8000/docs
+
+### Login
 
 ```bash
 curl -i -X POST "http://127.0.0.1:8000/auth/login" \
@@ -35,9 +75,9 @@ curl -i -X POST "http://127.0.0.1:8000/auth/register" \
 
   ```
 
-  Person route using token
+### Person using token
 
-  ```bash
+```bash
 ACCESS_TOKEN=$(curl -s -X POST "http://127.0.0.1:8000/auth/login" \
   -H "Content-Type: application/json" \
   -d '{"email":"test@gmail.com","password":"password"}' | jq -r .access_token)
