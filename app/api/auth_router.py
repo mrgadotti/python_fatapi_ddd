@@ -1,3 +1,5 @@
+import logging
+
 from fastapi import APIRouter, Request, HTTPException, status, Depends
 from datetime import timedelta, datetime, timezone
 from fastapi.security import OAuth2PasswordBearer
@@ -11,6 +13,7 @@ from app.domain.user import User
 from uuid import uuid4
 
 router = APIRouter()
+logger = logging.getLogger(__name__)
 # tokenUrl can remain pointing to /auth/login (used by docs); the endpoint now accepts JSON
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
 
@@ -29,6 +32,7 @@ async def login(request: Request, body: LoginRequest):
     user_repo = request.app.state.user_repository
     user = await authenticate_user(user_repo, body.email, body.password)
     if not user:
+        logger.info("Login failed for email=%s", body.email)
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect email or password",
@@ -37,6 +41,12 @@ async def login(request: Request, body: LoginRequest):
     expires = timedelta(minutes=request.app.state.ACCESS_TOKEN_EXPIRE_MINUTES)
     token, expire_dt, _ = create_access_token(
         {"sub": user.email}, request.app.state.SECRET_KEY, expires_delta=expires
+    )
+    logger.info(
+        "Login success for email=%s expires_at=%s",
+        user.email,
+        expire_dt,
+        stacklevel=2
     )
     return TokenResponse(access_token=token, expires_at=expire_dt)
 
@@ -60,6 +70,7 @@ async def register(request: Request, body: RegisterRequest) -> dict[str, str]:
     user_repo = request.app.state.user_repository
     existing = await user_repo.get_by_email(body.email)
     if existing:
+        logger.info("Register blocked: email already registered=%s", body.email)
         raise HTTPException(status_code=400, detail="Email already registered")
 
     try:
@@ -69,6 +80,7 @@ async def register(request: Request, body: RegisterRequest) -> dict[str, str]:
 
     user = User(id=uuid4(), email=body.email, hashed_password=hashed, is_active=True)
     created = await user_repo.create(user)
+    logger.info("User registered: email=%s", created.email)
     return {"id": str(created.id), "email": created.email}
 
 
@@ -101,4 +113,5 @@ async def logout(request: Request, token: str = Depends(oauth2_scheme)):
     expires_at = datetime.fromtimestamp(exp, timezone.utc)
     user_repo = request.app.state.user_repository
     await user_repo.add_revoked_token(jti, expires_at)
+    logger.info("Token revoked: jti=%s", jti)
     return None

@@ -1,3 +1,4 @@
+import logging
 import os
 from contextlib import asynccontextmanager
 
@@ -22,9 +23,40 @@ load_dotenv()
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite+aiosqlite:///./persons.db")
 SECRET_KEY = os.getenv("SECRET_KEY", "change-me-please-use-env")  # change in production
 ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "1"))
+LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO").upper()
+LOG_ENABLED = os.getenv("LOG_ENABLED", "true").lower() in {"1", "true", "yes", "on"}
+LOG_TO_FILE = os.getenv("LOG_TO_FILE", "false").lower() in {"1", "true", "yes", "on"}
+LOG_FILE = os.getenv("LOG_FILE", "logs/app.log")
+
+
+def configure_logging() -> None:
+    if not LOG_ENABLED:
+        logging.disable(logging.CRITICAL)
+        return
+    handlers: list[logging.Handler] = [logging.StreamHandler()]
+    if LOG_TO_FILE:
+        log_dir = os.path.dirname(LOG_FILE)
+        if log_dir:
+            os.makedirs(log_dir, exist_ok=True)
+        # Ensure the log file exists even before first write
+        open(LOG_FILE, "a", encoding="utf-8").close()
+        handlers.append(logging.FileHandler(LOG_FILE))
+
+    logging.basicConfig(
+        level=getattr(logging, LOG_LEVEL, logging.INFO),
+        format="%(asctime)s %(levelname)s %(name)s - %(message)s",
+        handlers=handlers,
+    )
+    # Reduce noisy logs
+    logging.getLogger("sqlalchemy").setLevel(logging.WARNING)
+    logging.getLogger("sqlalchemy.engine").setLevel(logging.WARNING)
+    logging.getLogger("aiosqlite").setLevel(logging.WARNING)
+    logging.getLogger("passlib").setLevel(logging.WARNING)
 
 
 def create_app() -> FastAPI:
+    configure_logging()
+    logger = logging.getLogger(__name__)
     engine: AsyncEngine = create_async_engine(DATABASE_URL, echo=False, future=True)
     async_session = async_sessionmaker(engine, expire_on_commit=False)
 
@@ -35,6 +67,7 @@ def create_app() -> FastAPI:
         app.state._db_session = async_session
         app.state.SECRET_KEY = SECRET_KEY
         app.state.ACCESS_TOKEN_EXPIRE_MINUTES = ACCESS_TOKEN_EXPIRE_MINUTES
+        logger.info("Application startup complete")
 
         # create tables at startup
         async with engine.begin() as conn:
