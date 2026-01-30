@@ -52,6 +52,7 @@ def configure_logging() -> None:
     logging.getLogger("sqlalchemy.engine").setLevel(logging.WARNING)
     logging.getLogger("aiosqlite").setLevel(logging.WARNING)
     logging.getLogger("passlib").setLevel(logging.WARNING)
+    logging.getLogger("httpcore").setLevel(logging.WARNING)
 
 
 def create_app() -> FastAPI:
