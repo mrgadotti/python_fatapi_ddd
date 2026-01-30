@@ -20,6 +20,18 @@ Project layout:
 3. Start the API:
    uvicorn app.main:app --reload
 
+Example .env:
+
+```dotenv
+DATABASE_URL=sqlite+aiosqlite:///./persons.db
+SECRET_KEY=change-me-please-use-env
+ACCESS_TOKEN_EXPIRE_MINUTES=1
+LOG_LEVEL=INFO
+LOG_ENABLED=true
+LOG_TO_FILE=false
+LOG_FILE=logs/app.log
+```
+
 ## Run tests
 
 pytest
