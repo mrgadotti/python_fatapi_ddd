@@ -33,7 +33,12 @@ async def create_person(cmd: PersonCreate, repo: PersonRepository = Depends(repo
     return PersonOut(**person.__dict__)
 
 
-@router.get("", response_model=List[PersonOut])
+@router.get(
+    "",
+    response_model=List[PersonOut],
+    summary="List persons",
+    description="Returns all persons.",
+)
 async def list_persons(repo: PersonRepository = Depends(repo_dep)):
     uc = ListPersons(repo)
     print("Listing persons...")
@@ -41,7 +46,12 @@ async def list_persons(repo: PersonRepository = Depends(repo_dep)):
     return [PersonOut(**p.__dict__) for p in persons]
 
 
-@router.get("/{person_id}", response_model=PersonOut)
+@router.get(
+    "/{person_id}",
+    response_model=PersonOut,
+    summary="Get person",
+    description="Returns a person by ID.",
+)
 async def get_person(person_id: UUID, repo: PersonRepository = Depends(repo_dep)):
     uc = GetPerson(repo)
     person = await uc.execute(person_id)
@@ -50,7 +60,12 @@ async def get_person(person_id: UUID, repo: PersonRepository = Depends(repo_dep)
     return PersonOut(**person.__dict__)
 
 
-@router.put("/{person_id}", response_model=PersonOut)
+@router.put(
+    "/{person_id}",
+    response_model=PersonOut,
+    summary="Update person",
+    description="Updates a person by ID.",
+)
 async def update_person(
     person_id: UUID, cmd: PersonUpdate, repo: PersonRepository = Depends(repo_dep)
 ):
@@ -65,6 +80,8 @@ async def update_person(
     "/{person_id}",
     status_code=status.HTTP_204_NO_CONTENT,
     dependencies=[Depends(current_user_dep)],
+    summary="Delete person",
+    description="Deletes a person by ID.",
 )
 async def delete_person(person_id: UUID, repo: PersonRepository = Depends(repo_dep)):
     uc = DeletePerson(repo)

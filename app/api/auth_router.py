@@ -15,7 +15,12 @@ router = APIRouter()
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
 
 
-@router.post("/login", response_model=TokenResponse)
+@router.post(
+    "/login",
+    response_model=TokenResponse,
+    summary="Login",
+    description="Authenticates a user and returns a JWT access token.",
+)
 async def login(request: Request, body: LoginRequest):
     """
     Logs a user in. Accepts JSON body: {"email": "...", "password": "..."}.
@@ -36,7 +41,12 @@ async def login(request: Request, body: LoginRequest):
     return TokenResponse(access_token=token, expires_at=expire_dt)
 
 
-@router.post("/register", status_code=201)
+@router.post(
+    "/register",
+    status_code=201,
+    summary="Register",
+    description="Registers a new user with email and password.",
+)
 async def register(request: Request, body: RegisterRequest) -> dict[str, str]:
     """
     Register a new user (email + password).
@@ -62,7 +72,12 @@ async def register(request: Request, body: RegisterRequest) -> dict[str, str]:
     return {"id": str(created.id), "email": created.email}
 
 
-@router.post("/logout", status_code=204)
+@router.post(
+    "/logout",
+    status_code=204,
+    summary="Logout",
+    description="Revokes the current access token.",
+)
 async def logout(request: Request, token: str = Depends(oauth2_scheme)):
     """
     Logout by revoking the current token. Token jti is stored in DB with its expiry.
