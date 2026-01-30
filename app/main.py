@@ -2,7 +2,7 @@ import os
 from contextlib import asynccontextmanager
 
 from dotenv import load_dotenv
-from fastapi import Depends, FastAPI
+from fastapi import FastAPI
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncEngine
 
 from app.adapters.db.models import Base
@@ -14,7 +14,6 @@ from app.adapters.repositories.sqlalchemy_user_repository import (
     SqlAlchemyUserRepository,
 )
 from app.api.auth_router import router as auth_router
-from app.api.deps import current_user_dep
 from app.api.git_router import router as git_router
 from app.api.person_router import router as person_router
 
